@@ -160,8 +160,8 @@ btrfs_create_home_snaphot = 'btrfs subvolume snapshot /home /home/pcm'
 btrfs_delete_root_snaphot = 'btrfs subvolume delete /pcm'
 btrfs_delete_home_snaphot = 'btrfs subvolume delete /home/pcm'
 
-#subprocess.call(btrfs_create_root_snaphot.split())
-#subprocess.call(btrfs_create_home_snaphot.split())
+subprocess.call(btrfs_create_root_snaphot.split())
+subprocess.call(btrfs_create_home_snaphot.split())
 
 # Fork 2 threads, 1 for actual program 
 # and the other for the fatrace
