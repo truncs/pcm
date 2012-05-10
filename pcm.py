@@ -16,6 +16,11 @@ from ptrace.debugger.debugger import *
 from ptrace.debugger.process_error import *
 
 PTRACE_O_TRACEEXIT = 0x00000040
+btrfs_create_root_snapshot = 'btrfs subvolume snapshot / /pcm'.split()
+btrfs_create_home_snapshot = 'btrfs subvoume snapshot /home /home/pcm'.split()
+
+btrfs_delete_root_snapshot = 'btrfs subvolume delete /pcm'.split()
+btrfs_delete_home_snapshot = 'btrfs subvolume delete /home/pcm'.split()
 
 def fatrace_fork(login_name, pid_pcm_program, filename):
     pid = os.fork()
@@ -154,14 +159,9 @@ print login_name
 # and that is how it is suppose to be if its not you 
 # doing it wrong
 
-btrfs_create_root_snaphot = 'btrfs subvolume snapshot / /pcm'
-btrfs_create_home_snaphot = 'btrfs subvolume snapshot /home /home/pcm'
 
-btrfs_delete_root_snaphot = 'btrfs subvolume delete /pcm'
-btrfs_delete_home_snaphot = 'btrfs subvolume delete /home/pcm'
-
-subprocess.call(btrfs_create_root_snaphot.split())
-subprocess.call(btrfs_create_home_snaphot.split())
+#subprocess.call(btrfs_create_root_snaphot.split())
+#subprocess.call(btrfs_create_home_snaphot.split())
 
 # Fork 2 threads, 1 for actual program 
 # and the other for the fatrace
@@ -246,8 +246,8 @@ else:
                 # Don't do anything
                 pass
         
-    subprocess.call(btrfs_delete_root_snaphot.split())
-    subprocess.call(btrfs_delete_home_snaphot.split())
+    subprocess.call(btrfs_delete_root_snapshot)
+    subprocess.call(btrfs_delete_home_snapshot)
     try:
 	# TODO Remove the temp file
         os.remove(filename)
