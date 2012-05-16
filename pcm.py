@@ -16,11 +16,11 @@ from ptrace.debugger.debugger import *
 from ptrace.debugger.process_error import *
 
 PTRACE_O_TRACEEXIT = 0x00000040
-btrfs_create_root_snapshot = 'btrfs subvolume snapshot / /pcm'.split()
-btrfs_create_home_snapshot = 'btrfs subvoume snapshot /home /home/pcm'.split()
+btrfs_create_root_snapshot = '/sbin/btrfs subvolume snapshot / /pcm'.split()
+btrfs_create_home_snapshot = '/sbin/btrfs subvolume snapshot /home /home/pcm'.split()
 
-btrfs_delete_root_snapshot = 'btrfs subvolume delete /pcm'.split()
-btrfs_delete_home_snapshot = 'btrfs subvolume delete /home/pcm'.split()
+btrfs_delete_root_snapshot = '/sbin/btrfs subvolume delete /pcm'.split()
+btrfs_delete_home_snapshot = '/sbin/btrfs subvolume delete /home/pcm'.split()
 
 def fatrace_fork(login_name, pid_pcm_program, filename):
     pid = os.fork()
@@ -30,24 +30,26 @@ def fatrace_fork(login_name, pid_pcm_program, filename):
         sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
+	print 'Starting fatrace tracing ...'
         os.execvp("/usr/local/sbin/fatrace", ("fatrace",))
     else:
-        print pid_pcm_program
+        #print pid_pcm_program
         time.sleep(5)
         # We wait for the child process so 
         # has to get the correct status of the child 
         # program and not of su
         #print int(child_pid)
+        print 'Starting ptrace tracing ...'
         d = PtraceDebugger()
         d.options |= PTRACE_O_TRACEEXIT
         process = d.addProcess(pid_pcm_program, False)
-        print process.is_stopped
+        #print process.is_stopped
         process.cont()
-        print process.is_stopped
+        #print process.is_stopped
         while True:
             try:
                 event = process.waitEvent()
-                print event
+                #print event
                 process.cont()
             except ProcessError:
                 break
@@ -60,7 +62,7 @@ def fatrace_fork(login_name, pid_pcm_program, filename):
                 break
             if m.pathname is None or m.pathname[0] != '/':
                 if m.permissions[1] == 'w' and m.permissions[3] == 'p':
-                    print m.pathname
+                    print 'Memory range ' + str(map_count + 1)
                     diff = (m.end - m.start) / 8
                     process.writeBytes(m.start, '0' * diff)
                     map_count += 1
@@ -75,9 +77,9 @@ def fatrace_fork(login_name, pid_pcm_program, filename):
 def child(*args):
     # Get Pid first  and then use os.system
     # or use os.execve
-    print args[0][0]
+    #print args[0][0]
     arg_tuple = tuple(args[0])
-    print args
+    #print args
     os.execvp(arg_tuple[0], arg_tuple)
     
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
@@ -113,8 +115,8 @@ if args.filename is None or args.login_name is None:
     parser.print_help()
     exit()
 
-print args.filename
-print " ".join(args.program_args)
+#print args.filename
+#print " ".join(args.program_args)
 policy_dict = {}
 regex_list = []
 policy_values = ('askuser', 'keep', 'discard')
@@ -140,9 +142,9 @@ try:
             # This will make regular expression simpler some time in the 
             # future
             filename = filename.replace('*', '.*')
-            print filename
+            #print filename
             policy_dict[filename] = value
-    print policy_dict
+    #print policy_dict
 
 except IOError:
     print "Error reading policy file"
@@ -151,7 +153,7 @@ except IOError:
 # Change this to take the real user id
 real_uid = 1000 #os.getresuid()[0]
 login_name = pwd.getpwuid(os.getresuid()[0] )[0]
-print login_name
+#print login_name
 
 # Before forking make a snapshot of the root 
 # subvolume and the home subvolume 
@@ -159,9 +161,8 @@ print login_name
 # and that is how it is suppose to be if its not you 
 # doing it wrong
 
-
-#subprocess.call(btrfs_create_root_snaphot.split())
-#subprocess.call(btrfs_create_home_snaphot.split())
+subprocess.call(btrfs_create_root_snapshot)
+subprocess.call(btrfs_create_home_snapshot)
 
 # Fork 2 threads, 1 for actual program 
 # and the other for the fatrace
@@ -169,11 +170,12 @@ print login_name
 pid = os.fork()
 if not pid:
     os.setuid(real_uid)
+    print 'Starting pcm process ...'
     child(args.program_args)
 else:
     filename = id_generator()
     filename = '/tmp/' + filename
-    print filename
+    #print filename
     fatrace_fork(login_name, pid, filename)
     try :
         pid = str(pid)
@@ -204,12 +206,12 @@ else:
                     else:
                         askuser_set_other.add(m.group(3))
                         
-                print m.group(2)
-                print m.group(3)
-    print askuser_set
-    print discard_set
-    print askuser_set_other
-    print discard_set_other
+                #print m.group(2)
+                #print m.group(3)
+    #print askuser_set
+    #print discard_set
+    #print askuser_set_other
+    #print discard_set_other
     
     askuser_set = askuser_set - askuser_set_other
     discard_set = discard_set - discard_set_other
